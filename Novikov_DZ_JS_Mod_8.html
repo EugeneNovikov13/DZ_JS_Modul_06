@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+        #search_block {
+            width: 450px;
+            margin: auto;
+            background: #518bba;
+            padding: 5px 30px 20px 30px;
+        }
+        #form1 {
+            margin: auto;
+            box-sizing: border-box;
+            width: 400px;
+            height: 170px;
+            border: 1px solid darkblue;
+            border-radius: 5px;
+            padding: 20px 15px 15px 15px;
+        }
+        h4 {
+            text-align: center;
+            margin: 0;
+            padding: 10px;
+        }
+        #title, #type {
+            box-sizing: border-box;
+            width: 253px;
+            height: 30px;
+            padding: 5px 15px;
+            margin-bottom: 20px;
+            border: 1px solid grey;
+            border-radius: 3px;
+        }
+        #form1 label {
+            display: inline-block;
+            width: 110px;
+            height: 30px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        #search_button {
+            box-sizing: border-box;
+            width: 367px;
+            height: 30px;
+            border: 1px solid grey;
+            border-radius: 3px;
+            background: lightgrey;
+        }
+        #search_button:hover {
+            cursor: pointer;
+        }
+        .film_block {
+            box-sizing: border-box;
+            width: 300px;
+            height: 200px;
+            border: 1px solid grey;
+            border-radius: 5px;
+            float: left;
+            margin: 10px;
+            padding: 10px;
+            background: #518bba;
+        }
+        .film_block img {
+            width: 120px;
+            height: 180px;
+            margin-right: 20px;
+            float: left;
+        }
+        .about_block {
+            float: left;
+            width: 130px;
+            height: 150px;
+        }
+        .film_type {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: small;
+        }
+        .film_title {
+            font-size: small;
+            font-weight: bolder;
+            max-height: 80px;
+            overflow: hidden;
+        }
+        .details {
+            width: 130px;
+            height: 25px;
+            border: 1px solid grey;
+            border-radius: 3px;
+            background: lightgrey;
+        }
+        .details:hover {
+            cursor: pointer;
+        }
+        #pagination {
+            clear: left;
+            width: 500px;
+            height: 30px;
+            margin: auto;
+        }
+        #pagination div {
+            box-sizing: border-box;
+            width: 60px;
+            height: 30px;
+            background: lightgrey;
+            margin: 0;
+            float: left;
+            border: 1px solid grey;
+            border-radius: 2px;
+            text-align: center;
+            padding-top: 5px;
+        }
+        #pagination div:hover {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div id="search_block">
+    <h4>Search:</h4>
+    <form action="" method="GET" id="form1">
+        <label for="title">Title:</label>
+        <input type="text" id="title">
+        <label for="type">Type:</label>
+        <select id="type">
+            <option value="Movie">Movie</option>
+            <option value="Series">Series</option>
+            <option value="Episode">Episode</option>
+        </select>
+        <input type="button" id="search_button" value="Search" onclick="filmSearching.init()">
+    </form>
+</div>
+<script>
+let filmSearching = {
+    title: document.getElementById('title'),
+    type: document.getElementById('type'),
+    myKey: 'ff22f51b',
+    page: 1,
+    searchObj: {},
+    init() {
+        this.page = 1;
+        this.request();
+    },
+    request() {
+        if (document.getElementById('movies')) document.getElementById('movies').remove();
+        let request;
+        if(window.XMLHttpRequest)
+            request = new XMLHttpRequest();
+        else {
+            request = new ActiveXObject("Microsoft.XMLHTTP");
+        }
+        let url = new URL('http://www.omdbapi.com/');
+        url.searchParams.set('s', this.title.value);
+        url.searchParams.set('type', this.type.value);
+        url.searchParams.set('page', this.page);
+        url.searchParams.set('apikey', this.myKey);
+        request.open("GET", url);
+        request.responseType = "json";
+        request.onload = function () {
+            if (request.status === 200) {
+                filmSearching.searchObj = request.response;
+                console.log(filmSearching.searchObj);
+            }
+            if (filmSearching.searchObj.Response === 'True') filmSearching.createMovieList()
+            else filmSearching.createErrorLine()
+        }
+        request.send();
+    },
+    createErrorLine() {
+        let resStr = this.type.value + ' not found!';
+        let newLine = document.createElement('h4');
+        newLine.innerText = resStr;
+        newLine.setAttribute('id','not_found');
+        document.body.appendChild(newLine);
+        this.title.setAttribute('onclick', 'filmSearching.errorRemove()');
+    },
+    createMovieList() {
+        let newBlock = document.createElement('div');
+        newBlock.setAttribute('id', 'movies');
+        let str = '';
+        let pageFilmQuan = this.searchObj.Search.length;   //количество фильмов на странице
+        str =       '    <h4>Films:</h4>';
+        for (let i=0; i<pageFilmQuan; i++) {
+            str +=  '    <div class="film_block">\n' +
+                    '        <img src="'+ this.searchObj.Search[i].Poster +'" alt="N/A">\n' +
+                    '        <div class="about_block">\n' +
+                    '            <p class="film_type">'+ this.searchObj.Search[i].Type +'</p>\n' +
+                    '            <p class="film_title">'+ this.searchObj.Search[i].Title +'</p>\n' +
+                    '            <p class="film_year">'+ this.searchObj.Search[i].Year +'</p>\n' +
+                    '        </div>\n' +
+                    '        <button class="details" value="'+ this.searchObj.Search[i].imdbID +'">Details</button>\n' +
+                    '    </div>'
+        }
+        let pageSum = Math.ceil(this.searchObj.totalResults/10);  //количество страниц с фильмами
+        str +=      '    <div id="pagination">\n' +
+                    '        <div id="previous">&#8810;</div>';
+        let i = this.page;
+        let counter = 0;
+        if ((pageSum-this.page) < 5) i = (pageSum - 5);      //не должно быть более 6 кнопок для страниц и номера страниц
+        for (;i <= pageSum && counter<6; i++, counter++) {   //не должны превышать общего числа страниц
+            str +=  '        <div class="page_number">'+ `${i}` +'</div>';
+        }
+        str +=      '        <div id="next">&#8811;</div>\n' +
+                    '    </div>';
+        newBlock.innerHTML = str;
+        document.body.appendChild(newBlock);
+        document.getElementById('pagination').addEventListener('click', this.switchPages)
+        document.getElementById('movies').addEventListener('click', this.detailsOutput)
+    },
+    switchPages(e) {
+        if (e.target.className === 'page_number') {
+            filmSearching.page = +e.target.innerHTML;
+            filmSearching.request();
+        }
+        if (e.target.id === 'previous' && filmSearching.page > 1) {
+            filmSearching.page-- ;       //номер страницы не меньше 1
+            filmSearching.request();
+        }
+        if (e.target.id === 'next' && filmSearching.page < Math.ceil(filmSearching.searchObj.totalResults/10)) {
+            filmSearching.page++ ;   //номер страницы должен быть не больше общего числа найденных страниц
+            filmSearching.request();
+        }
+    },
+    detailsOutput(e) {
+        if (e.target.className === 'details') console.log(e.target.value) //в value у нас сохранено imdbID
+    },
+    errorRemove() {
+        if (document.getElementById('not_found')) {
+            document.getElementById('not_found').remove();
+            this.title.removeAttribute('onclick');
+        }
+    }
+}
+</script>
+</body>
+</html>
