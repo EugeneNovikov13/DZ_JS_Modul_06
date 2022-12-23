@@ -6,6 +6,7 @@
     <style>
         body {
             font-family: sans-serif;
+            background: black;
         }
         #search_block {
             width: 450px;
@@ -184,18 +185,16 @@
 </div>
 <script>
 let filmSearching = {
-    title: document.getElementById('title'),
-    type: document.getElementById('type'),
-    myKey: 'ff22f51b',
-    page: 1,
-    searchObj: {},
-    detailsObj: {},
+    myKey: 'ff22f51b',   //ключ доступа от API
+    page: 1,             //текущая страница
+    searchObj: {},       //объект для хранения данных о найденных фильмах
+    detailsObj: {},      //объект для хранения данных о выбранном фильме
     init() {
         this.page = 1;
         this.request();
     },
     request() {
-        if (document.getElementById('movies')) document.getElementById('movies').remove();
+        if (document.getElementById('movies')) document.getElementById('movies').remove();       //удаляем прежние блоки
         if (document.getElementById('not_found')) document.getElementById('not_found').remove();
         if (document.getElementById('details')) document.getElementById('details').remove();
         let request;
@@ -204,9 +203,9 @@ let filmSearching = {
         else {
             request = new ActiveXObject("Microsoft.XMLHTTP");
         }
-        let url = new URL('http://www.omdbapi.com/');
-        url.searchParams.set('s', this.title.value);
-        url.searchParams.set('type', this.type.value);
+        let url = new URL('http://www.omdbapi.com/');                     //формируем строку запроса
+        url.searchParams.set('s', document.getElementById('title').value);
+        url.searchParams.set('type', document.getElementById('type').value);
         url.searchParams.set('page', this.page);
         url.searchParams.set('apikey', this.myKey);
         request.open("GET", url);
@@ -214,15 +213,14 @@ let filmSearching = {
         request.onload = function () {
             if (request.status === 200) {
                 filmSearching.searchObj = request.response;
-                console.log(filmSearching.searchObj);
-            }
+            }   //если получен непустой объект, то заполняем объект с фильмами, если нет, то выводим сообщение об ошибке
             if (filmSearching.searchObj.Response === 'True') filmSearching.createMovieList()
             else filmSearching.createErrorLine()
         }
         request.send();
     },
     createErrorLine() {
-        let resStr = this.type.value + ' not found!';
+        let resStr = document.getElementById('type').value + ' not found!';
         let newLine = document.createElement('h4');
         newLine.innerText = resStr;
         newLine.setAttribute('id','not_found');
@@ -234,7 +232,7 @@ let filmSearching = {
         let str = '';
         let pageFilmQuan = this.searchObj.Search.length;   //количество фильмов на странице
         str =       '    <h4>Films:</h4>';
-        for (let i=0; i<pageFilmQuan; i++) {
+        for (let i=0; i<pageFilmQuan; i++) {           //создаем HTML узел, заполняя данными из значений объекта фильмов
             str +=  '    <div class="film_block">\n' +
                     '        <img src="'+ this.searchObj.Search[i].Poster +'" alt="">\n' +
                     '        <div class="about_block">\n' +
@@ -253,7 +251,7 @@ let filmSearching = {
         if ((pageSum-this.page) < 5 && pageSum > 6) firstNum = pageSum - 5; //для страниц и номера страниц
         if (pageSum <= 6) firstNum = 1;                                     //не должны превышать общего числа страниц
         for (let i = firstNum, counter = 0; i <= pageSum && counter < 6; i++, counter++) {
-            if (i === this.page) {
+            if (i === this.page) {                                         //текущей странице присваиваем собственное id
             str +=  '        <div class="page_number" id="current_page">'+ `${i}` +'</div>';
             }
             else str +=  '   <div class="page_number">'+ `${i}` +'</div>';
